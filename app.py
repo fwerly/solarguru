@@ -121,22 +121,14 @@ def label_mes(mes_ano: str) -> str:
 # DATA LAYER (resiliente — nunca deixa a tela quebrar)
 # =============================================================================
 
-@st.cache_resource
-def get_client() -> GrowattClient | None:
-    user = cfg("GROWATT_USERNAME")
-    pw = cfg("GROWATT_PASSWORD")
-    if not user or not pw:
-        return None
-    try:
-        c = GrowattClient(user, pw)
-        c.login()
-        return c
-    except Exception:
-        return None
+def now_br() -> dt.datetime:
+    """Horario de Brasilia (UTC-3, sem horario de verao). O servidor do
+    Streamlit Cloud roda em UTC; isso garante data/saudacao/ciclo corretos."""
+    return dt.datetime.now(dt.timezone(dt.timedelta(hours=-3))).replace(tzinfo=None)
 
 
 def safe(fn, default):
-    """Executa fn() e retorna default se qualquer coisa falhar."""
+    """Executa fn() e retorna default se qualquer coisa falhar (so na renderizacao)."""
     try:
         r = fn()
         return r if r is not None else default
@@ -144,32 +136,46 @@ def safe(fn, default):
         return default
 
 
+@st.cache_resource
+def get_client() -> GrowattClient | None:
+    user = cfg("GROWATT_USERNAME")
+    pw = cfg("GROWATT_PASSWORD")
+    if not user or not pw:
+        return None
+    # NAO captura excecao: login que falha (transitorio) nao fica em cache.
+    c = GrowattClient(user, pw)
+    c.login()
+    return c
+
+
+# Loaders SEM try/except: se a API do Growatt falhar, a excecao sobe e o
+# st.cache_data NAO cacheia o erro -> proximo refresh tenta de novo. O fallback
+# acontece so na renderizacao (via safe() nos call sites do build).
 @st.cache_data(ttl=60)
 def load_plants(_c):
-    return safe(lambda: _c.list_plants(), [])
+    return _c.list_plants()
 
 
 @st.cache_data(ttl=30)
 def load_realtime(_c, _sn, _tlx, _pid):
     inv = Inverter(serial=_sn, plant_id=_pid, alias="", model="", is_tlx=_tlx)
-    return safe(lambda: _c.realtime(inv), {})
+    return _c.realtime(inv)
 
 
 @st.cache_data(ttl=30)
 def load_summary(_c, pid):
-    return safe(lambda: _c.plant_summary(pid), {})
+    return _c.plant_summary(pid)
 
 
 @st.cache_data(ttl=60)
 def load_day_curve(_c, _sn, _tlx, _pid, date_iso):
     inv = Inverter(serial=_sn, plant_id=_pid, alias="", model="", is_tlx=_tlx)
-    return safe(lambda: _c.day_curve(inv, dt.date.fromisoformat(date_iso)), {})
+    return _c.day_curve(inv, dt.date.fromisoformat(date_iso))
 
 
 @st.cache_data(ttl=300)
 def load_cycle(_c, pid, dia, today_iso):
-    return safe(lambda: _c.cycle_daily_history(pid, dia, dt.date.fromisoformat(today_iso)),
-                ({}, dt.date.fromisoformat(today_iso), dt.date.fromisoformat(today_iso)))
+    return _c.cycle_daily_history(pid, dia, dt.date.fromisoformat(today_iso))
 
 
 # =============================================================================
@@ -222,7 +228,7 @@ TEMPLATE_PATH = Path(__file__).parent / "dashboard_template.html"
 
 
 def build_template_vars() -> dict:
-    now = dt.datetime.now()
+    now = now_br()
     today = now.date()
     hora_atual = now.hour + now.minute / 60
 
@@ -240,10 +246,10 @@ def build_template_vars() -> dict:
     nome_user = cfg("NOME_USUARIO", "Frederico")
     concessionaria = cfg("CONCESSIONARIA", "Enel RJ")
 
-    # --- API (resiliente) ---
-    client = get_client()
+    # --- API (resiliente: falha nao fica em cache, fallback so na tela) ---
+    client = safe(get_client, None)
     api_ok = client is not None
-    plants = load_plants(client) if api_ok else []
+    plants = safe(lambda: load_plants(client), []) if api_ok else []
     api_ok = api_ok and bool(plants)
 
     if api_ok:
@@ -251,8 +257,8 @@ def build_template_vars() -> dict:
         plant_name = plants[0].get("plantName", "Planta")
         inverters = safe(lambda: client.list_inverters(plant_id), [])
         inv = inverters[0] if inverters else Inverter("—", plant_id, "—", "MIN-TLX", True)
-        rt = load_realtime(client, inv.serial, inv.is_tlx, plant_id)
-        summary = load_summary(client, plant_id)
+        rt = safe(lambda: load_realtime(client, inv.serial, inv.is_tlx, plant_id), {})
+        summary = safe(lambda: load_summary(client, plant_id), {})
     else:
         plant_id, plant_name = "—", "SolarGuru"
         inv = Inverter("—", "—", "—", "MIN-TLX", True)
@@ -274,7 +280,10 @@ def build_template_vars() -> dict:
     fac = to_float(first(rt, "fac", default=0))
 
     # --- Ciclo ---
-    daily_map, ciclo_inicio, ciclo_fim = load_cycle(client, plant_id, dia_fechamento, today.isoformat()) if api_ok else ({}, today, today)
+    daily_map, ciclo_inicio, ciclo_fim = (
+        safe(lambda: load_cycle(client, plant_id, dia_fechamento, today.isoformat()), ({}, today, today))
+        if api_ok else ({}, today, today)
+    )
     ciclo_kwh = sum(daily_map.values()) if daily_map else 0
     ciclo_dias_passados = max(1, (today - ciclo_inicio).days + 1)
     ciclo_dias_total = max(1, (ciclo_fim - ciclo_inicio).days + 1)
@@ -285,7 +294,7 @@ def build_template_vars() -> dict:
     projecao_ciclo = media_diaria * ciclo_dias_total
 
     # --- Curva do dia ---
-    curve = load_day_curve(client, inv.serial, inv.is_tlx, plant_id, today.isoformat()) if api_ok else {}
+    curve = safe(lambda: load_day_curve(client, inv.serial, inv.is_tlx, plant_id, today.isoformat()), {}) if api_ok else {}
     real_points = []
     for hm, watts in sorted(curve.items()):
         try:
