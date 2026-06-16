@@ -1,0 +1,6 @@
+streamlit>=1.32
+growattServer>=2.1
+plotly>=5.20
+pandas>=2.2
+pypdf>=4.0
+python-dotenv>=1.0

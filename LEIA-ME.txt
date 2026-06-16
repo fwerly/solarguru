@@ -1,0 +1,31 @@
+DASHBOARD SOLAR GROWATT
+========================
+
+Como usar (primeira vez):
+1. Confira que o Python 3.10+ esta instalado: abra um cmd e rode `python --version`
+   Se nao tiver: baixe em https://www.python.org/downloads/ (marque "Add Python to PATH")
+2. Du-clique em setup.bat (instala as dependencias na pasta .venv)
+3. Du-clique em run.bat (abre o dashboard no navegador)
+
+Uso normal:
+- Sempre que quiser ver o dashboard: du-clique em run.bat
+- Para fechar: feche a janela do prompt preto (Ctrl+C)
+
+Configuracao:
+- O arquivo .env tem suas credenciais ShinePhone e a tarifa de energia
+- Para ajustar o valor do kWh, edite TARIFA_KWH no .env
+- A pagina recarrega sozinha a cada 60 segundos
+
+Estrutura:
+- app.py            : interface do dashboard (Streamlit + Plotly)
+- growatt_client.py : cliente que conversa com a API do Growatt
+- .env              : suas credenciais (NAO compartilhe)
+- requirements.txt  : dependencias Python
+- setup.bat / run.bat : atalhos pra Windows
+
+Solucao de problemas:
+- "Falha no login Growatt": confira usuario/senha no .env (mesmos do app ShinePhone)
+- "Sem dados de geracao": pode ser noite, ou primeira sincronizacao do inversor
+- Servidor Growatt as vezes muda: se quebrar, atualize a lib com:
+    .venv\Scripts\activate.bat
+    pip install --upgrade growattServer

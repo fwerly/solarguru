@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SolarGuru · {{NAME}}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --border: #e5e5ea;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
+    --ink-1: #1d1d1f;
+    --ink-2: #6e6e73;
+    --ink-3: #a1a1a6;
+    --grid: #f0f0f5;
+    --solar: #ff9f0a;
+    --yellow: #ffd60a;
+    --green: #30d158;
+    --green-d: #0e7c2c;
+    --blue: #0a84ff;
+    --blue-d: #0a5ec7;
+    --purple: #bf5af2;
+    --red: #ff3b30;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--ink-1);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01", "ss03";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  .num-tight {
+    font-family: "Inter Tight", "Inter", -apple-system, sans-serif;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-lg { border-radius: 20px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 999px; display:inline-block;}
+  .ic-bg {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .divider { height: 1px; background: var(--border); }
+  .hover-row:hover { background: #fafafa; }
+  /* tabs */
+  .tab {
+    font-size: 14px; font-weight: 500; color: var(--ink-2);
+    padding: 8px 0; margin-right: 24px; border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .tab[aria-selected="true"] { color: var(--ink-1); border-bottom-color: var(--ink-1); }
+  /* receipt rows */
+  .receipt-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 11px 0; align-items: baseline;}
+  .receipt-sub { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+  /* accordion chevron */
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .chev { transform: rotate(90deg); }
+  .chev { transition: transform .15s ease; }
+  /* chart tooltip */
+  .tooltip-pill {
+    position: absolute; pointer-events: none;
+    background: #fff; border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    border-radius: 10px; padding: 8px 12px;
+    font-size: 12px; font-weight: 500;
+    transform: translate(-50%, -120%);
+    white-space: nowrap;
+  }
+  .tooltip-pill .t-time { color: var(--ink-3); font-weight: 500; }
+  .tooltip-pill .t-val  { color: var(--ink-1); font-weight: 600; margin-left: 6px;}
+  /* subtle gradients */
+  .grad-cream { background: linear-gradient(135deg, #fff8e1 0%, #ffffff 70%); }
+  .grad-blue  { background: linear-gradient(135deg, #e6f1fe 0%, #ffffff 70%); }
+  .grad-green { background: linear-gradient(135deg, #e8f9ee 0%, #ffffff 70%); }
+  .ring-faint { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04); }
+  /* progress */
+  .progress {
+    height: 6px; border-radius: 999px; background: rgba(255,159,10,0.18);
+    overflow: hidden;
+  }
+  .progress > span {
+    display:block; height: 100%; background: var(--solar);
+    border-radius: 999px;
+  }
+  .receipt {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fcfcfd;
+    padding: 22px 24px;
+  }
+  .picker {
+    display:inline-flex; align-items:center; gap:8px;
+    border:1px solid var(--border); border-radius: 9px;
+    padding: 6px 10px 6px 12px; background:#fff;
+    font-size: 13px; font-weight: 500; color: var(--ink-1);
+    box-shadow: var(--shadow);
+  }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; color: var(--ink-1);
+    border: 1px solid var(--border); background: #fff;
+  }
+  table.tech { width: 100%; border-collapse: collapse; }
+  table.tech th, table.tech td { text-align: left; padding: 10px 12px; font-size: 13px; }
+  table.tech th { color: var(--ink-3); font-weight: 500; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;}
+  table.tech tbody tr { border-top: 1px solid var(--border); }
+  table.tech td.num-c { text-align: right; font-variant-numeric: tabular-nums; }
+  .text-ink-2 { color: var(--ink-2); }
+  .text-ink-3 { color: var(--ink-3); }
+  /* ===== MOBILE ===== */
+  @media (max-width: 640px) {
+    .m-stack { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+    .m-text-left { text-align: left !important; }
+    .hero-h1 { font-size: 24px !important; }
+    .paid-big { font-size: 40px !important; }
+    .num-40 { font-size: 30px !important; }
+    .flow-arrow { transform: rotate(90deg); flex: 0 0 20px !important; }
+    .receipt { padding: 16px 16px !important; }
+    .receipt-sub { font-size: 11px !important; }
+    .m-hide { display: none !important; }
+  }
+  /* energy flow */
+  .flow-node {
+    flex: 1; background:#fff; border:1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px; text-align: center; position: relative;
+  }
+  .flow-arrow {
+    display:flex; align-items:center; justify-content:center;
+    color: var(--ink-3); font-size: 22px; flex: 0 0 28px;
+  }
+</style>
+</head>
+<body>
+
+<div class="max-w-[1280px] mx-auto px-4 py-6 md:px-10 md:py-10">
+
+  <!-- 1. HEADER -->
+  <header class="flex items-start justify-between mb-8 md:mb-12 m-stack">
+    <div>
+      <h1 class="num-tight hero-h1" style="font-size: 30px; font-weight: 600; line-height: 1.1;">
+        <span style="color:#ff9f0a">☀</span>&nbsp; {{GREETING}}, {{NAME}}
+      </h1>
+      <p class="text-ink-2 mt-2" style="font-size: 16px;">{{DATE_FULL}}</p>
+    </div>
+    <div class="text-right m-text-left">
+      <p style="font-size: 14px; font-weight: 500;">{{PLANT_NAME}}</p>
+      <p class="text-ink-2 mt-0.5" style="font-size: 13px;">
+        {{CONCESSIONARIA}} · Trifásico
+        <span class="pill ml-2" style="background:{{STATUS_BG}}; color:{{STATUS_FG}}; padding: 2px 8px; font-size:11px;">
+          <span class="dot" style="background:{{STATUS_DOT}}"></span>{{STATUS_TEXT}}
+        </span>
+      </p>
+    </div>
+  </header>
+
+  <!-- 2. AGORA -->
+  <section class="mb-10">
+    <div class="eyebrow mb-4">Agora</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-5">
+          <div class="ic-bg" style="background: rgba(255,159,10,0.12);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#ff9f0a"/></svg>
+          </div>
+          <span class="text-ink-3" style="font-size:11px;">tempo real</span>
+        </div>
+        <div class="num" style="font-size: 32px; font-weight: 600; color: {{POWER_COLOR}};">{{POWER_VALUE}}<span class="text-ink-3" style="font-size: 16px; font-weight: 500; margin-left: 4px;">{{POWER_UNIT}}</span></div>
+        <div class="text-ink-2 mt-1" style="font-size: 12px;">Potência agora</div>
+        <div class="mt-3">
+          <span class="pill" style="background: {{POWER_PILL_BG}}; color: {{POWER_PILL_FG}};">
+            <span class="dot" style="background:{{POWER_PILL_DOT}}"></span> {{POWER_PILL_TEXT}}
+          </span>
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-5">
+          <div class="ic-bg" style="background: rgba(255,214,10,0.18);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c79900" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="4" fill="#ffd60a" stroke="none"/>
+              <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>
+            </svg>
+          </div>
+          <span class="text-ink-3" style="font-size:11px;">{{TODAY_DAY_MONTH}}</span>
+        </div>
+        <div class="num" style="font-size: 32px; font-weight: 600;">{{TODAY_KWH}}<span class="text-ink-3" style="font-size: 16px; font-weight: 500; margin-left: 4px;">kWh</span></div>
+        <div class="text-ink-2 mt-1" style="font-size: 12px;">Gerado hoje</div>
+        <div class="mt-3 text-ink-2" style="font-size: 12px;">{{TODAY_VALUE_BRL}} em energia</div>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-5">
+          <div class="ic-bg" style="background: rgba(48,209,88,0.14);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14Z" fill="#30d158"/><path d="M5 19c4-4 8-8 14-14" stroke="#0e7c2c" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <span class="text-ink-3" style="font-size:11px;">{{INSTALL_DATE_SHORT}}</span>
+        </div>
+        <div class="num" style="font-size: 32px; font-weight: 600;">{{TOTAL_VALUE}}<span class="text-ink-3" style="font-size: 16px; font-weight: 500; margin-left: 4px;">{{TOTAL_UNIT}}</span></div>
+        <div class="text-ink-2 mt-1" style="font-size: 12px;">Total gerado</div>
+        <div class="mt-3 text-ink-2" style="font-size: 12px;">≈ {{TOTAL_CO2_KG}} kg de CO₂ evitado</div>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-5">
+          <div class="ic-bg" style="background: rgba(10,132,255,0.12);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M12 11v4M10 13h4"/></svg>
+          </div>
+          <span class="text-ink-3" style="font-size:11px;">na Enel</span>
+        </div>
+        <div class="num" style="font-size: 32px; font-weight: 600; color:{{CREDITS_COLOR}};">{{CREDITS_NOW}}<span class="text-ink-3" style="font-size: 16px; font-weight: 500; margin-left: 4px;">kWh</span></div>
+        <div class="text-ink-2 mt-1" style="font-size: 12px;">Créditos acumulados</div>
+        <div class="mt-3 text-ink-2" style="font-size: 12px;">{{CREDITS_NOW_NOTE}}</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 3. CICLO ATUAL (so geracao, sem previsao de R$) -->
+  <section class="mb-10">
+    <div class="flex items-end justify-between mb-4">
+      <div class="eyebrow">Geração neste ciclo</div>
+      <div class="text-ink-3" style="font-size: 12px;">{{CYCLE_START}} → {{CYCLE_END}} · dia {{CYCLE_DAY}} de {{CYCLE_DAYS_TOTAL}}</div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div class="card card-lg grad-cream ring-faint p-6">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="ic-bg" style="background:#fff3c4; width:24px; height:24px; border-radius:7px;">
+            <svg width="13" height="13" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#c77a00"/></svg>
+          </span>
+          <span style="font-size:12px; font-weight:500; color:#8a5a00;">Você gerou até agora</span>
+        </div>
+        <div class="num-tight num-40" style="font-size: 40px; font-weight: 700; color: #1d1d1f;">
+          {{CYCLE_KWH}}<span style="font-size:18px; font-weight:500; color:#8a5a00; margin-left:6px;">kWh</span>
+        </div>
+        <div class="text-ink-2 mt-2" style="font-size: 13px;">
+          De {{CYCLE_START}} até hoje · faltam <b style="color:var(--ink-1);">{{CYCLE_DAYS_LEFT}} dias</b> para a leitura
+        </div>
+        <div class="mt-4">
+          <div class="progress"><span style="width: {{CYCLE_PROGRESS_PCT}}%;"></span></div>
+          <div class="flex justify-between mt-2 text-ink-3" style="font-size: 11px;">
+            <span>Dia {{CYCLE_DAY}}</span><span>de {{CYCLE_DAYS_TOTAL}}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-lg grad-blue ring-faint p-6">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="ic-bg" style="background:#d6e7fd; width:24px; height:24px; border-radius:7px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0a5ec7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+          </span>
+          <span style="font-size:12px; font-weight:500; color:#0a5ec7;">Projeção até o fim do ciclo</span>
+        </div>
+        <div class="num-tight num-40" style="font-size: 40px; font-weight: 700;">
+          {{CYCLE_PROJECTED}}<span style="font-size:18px; font-weight:500; color:#0a5ec7; margin-left:6px;">kWh</span>
+        </div>
+        <div class="text-ink-2 mt-2" style="font-size: 13px;">
+          Ritmo de ~{{CYCLE_AVG_DAILY}} kWh/dia × {{CYCLE_DAYS_TOTAL}} dias
+        </div>
+        <div class="mt-4">
+          <svg viewBox="0 0 320 36" width="100%" height="36" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#0a84ff" stop-opacity="0.18"/>
+                <stop offset="100%" stop-color="#0a84ff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="{{SPARK_LINE_PATH}}" fill="none" stroke="#0a84ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="{{SPARK_AREA_PATH}}" fill="url(#sparkFill)"/>
+            <path d="{{SPARK_PROJ_PATH}}" fill="none" stroke="#0a84ff" stroke-width="1.4" stroke-dasharray="3 3" opacity="0.55"/>
+            <circle cx="{{SPARK_DOT_X}}" cy="{{SPARK_DOT_Y}}" r="2.5" fill="#0a84ff"/>
+          </svg>
+          <div class="flex justify-between mt-1 text-ink-3" style="font-size: 11px;">
+            <span>{{CYCLE_START}}</span><span>hoje</span><span>{{CYCLE_END}}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. SUA CONTA EXPLICADA (a estrela) -->
+  <section class="mb-10">
+    <div class="flex items-end justify-between mb-4">
+      <div>
+        <div class="eyebrow mb-1">Sua conta de {{LAST_BILL_MONTH}}, explicada</div>
+        <div class="text-ink-2" style="font-size: 13px;">Ciclo {{LAST_CYCLE_RANGE}} · vencimento {{LAST_BILL_DUE_FULL}}</div>
+      </div>
+    </div>
+
+    <!-- valor pago, grande -->
+    <div class="card card-lg p-6 md:p-7 mb-4" style="background: linear-gradient(135deg, #ecfaf1 0%, #ffffff 60%); border-color:#b8e8c4;">
+      <div class="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <div style="color:#0e7c2c; font-size: 13px; font-weight: 500;">Você pagou</div>
+          <div class="num-tight paid-big" style="font-size: 52px; font-weight: 700; color:#0e7c2c; line-height:1;">{{LAST_BILL_PAID}}</div>
+          <div class="text-ink-2 mt-2" style="font-size: 13px;">{{HEADLINE_NOTE}}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="text-ink-3" style="font-size:12px;">Energia que seu solar abateu este mês</div>
+          <div class="num-tight" style="font-size: 26px; font-weight: 700; color: var(--solar);">{{SOLAR_SAVED_BRL}}</div>
+          <div class="text-ink-3 mt-1" style="font-size:11px;">{{SOLAR_SAVED_NOTE}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- fluxo de energia -->
+    <div class="card p-6 mb-4">
+      <div class="eyebrow mb-4">Para onde foi sua energia solar</div>
+      <div class="flex flex-col sm:flex-row items-stretch gap-2 mb-5">
+        <div class="flow-node" style="border-color:#ffe0a3; background:#fffdf7;">
+          <div style="font-size:22px;">☀️</div>
+          <div class="num-tight" style="font-size:26px; font-weight:700; color:var(--solar); margin-top:4px;">{{BAL_INJECTED}}</div>
+          <div class="text-ink-2" style="font-size:12px;">kWh injetados na rede</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color:#b8e8c4; background:#f7fdf9;">
+          <div style="font-size:22px;">✓</div>
+          <div class="num-tight" style="font-size:26px; font-weight:700; color:var(--green-d); margin-top:4px;">{{BAL_USED_CREDITS}}</div>
+          <div class="text-ink-2" style="font-size:12px;">kWh abateram seu consumo</div>
+        </div>
+        <div class="flow-arrow">+</div>
+        <div class="flow-node" style="border-color:#b3d4fc; background:#f7faff;">
+          <div style="font-size:22px;">🔋</div>
+          <div class="num-tight" style="font-size:26px; font-weight:700; color:var(--blue-d); margin-top:4px;">{{BAL_BANKED}}</div>
+          <div class="text-ink-2" style="font-size:12px;">kWh guardados (créditos)</div>
+        </div>
+      </div>
+      <div style="background:#f7faff; border:1px solid #e2eefb; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--ink-2); line-height:1.5;">
+        🔋 <b style="color:var(--ink-1);">Banco de créditos: {{CREDITS_TOTAL}} kWh acumulados.</b>
+        {{CREDITS_EXPLAIN}}
+      </div>
+    </div>
+
+    <!-- linha de consumo -->
+    <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+      <div class="card p-5 text-center">
+        <div class="text-ink-3" style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em;">Consumiu da rede</div>
+        <div class="num-tight mt-2" style="font-size:28px; font-weight:600;">{{LAST_CONSUMED}} <span class="text-ink-3" style="font-size:13px;">kWh</span></div>
+      </div>
+      <div class="card p-5 text-center" style="background:#f7fdf9;">
+        <div class="text-ink-3" style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em;">Abatido por créditos</div>
+        <div class="num-tight mt-2" style="font-size:28px; font-weight:600; color:var(--green-d);">−{{LAST_USED}} <span class="text-ink-3" style="font-size:13px;">kWh</span></div>
+      </div>
+      <div class="card p-5 text-center">
+        <div class="text-ink-3" style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em;">Pagou de fato</div>
+        <div class="num-tight mt-2" style="font-size:28px; font-weight:600;">{{LAST_NET}} <span class="text-ink-3" style="font-size:13px;">kWh</span></div>
+      </div>
+    </div>
+
+    <!-- recibo detalhado -->
+    <details open>
+      <summary class="card flex items-center justify-between px-5 py-3 hover-row" style="border-radius: 12px;">
+        <span style="font-size: 14px; font-weight: 500;">Conta linha por linha</span>
+        <span class="chev text-ink-3">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+        </span>
+      </summary>
+
+      <div class="receipt mt-3">
+        <div class="receipt-row">
+          <div>
+            <div style="font-size:14px; font-weight:500;">Consumo mínimo (trifásico)</div>
+            <div class="receipt-sub">{{REC_MIN_KWH}} kWh × {{LAST_TARIFA_CHEIA}}/kWh — o mínimo que todo trifásico paga, com ou sem solar</div>
+          </div>
+          <div class="num" style="font-size: 15px; font-weight: 600;">{{REC_MIN_VALUE}}</div>
+        </div>
+        <div class="receipt-row" style="border-top: 1px solid var(--border);">
+          <div>
+            <div style="font-size:14px; font-weight:500;">Fio B <span class="text-ink-3" style="font-weight: 400;">(pedágio da Lei 14.300)</span></div>
+            <div class="receipt-sub">{{LAST_USED}} kWh compensados × {{LAST_FIO_B}}/kWh — taxa de uso da rede como "bateria"</div>
+          </div>
+          <div class="num" style="font-size: 15px; font-weight: 600;">{{REC_FIO_B_VALUE}}</div>
+        </div>
+        <div class="receipt-row" style="border-top: 1px solid var(--border);">
+          <div>
+            <div style="font-size:14px; font-weight:500;">Bandeira {{LAST_BANDEIRA}}</div>
+            <div class="receipt-sub">adicional tarifário do mês</div>
+          </div>
+          <div class="num" style="font-size: 15px; font-weight: 500;">{{REC_BANDEIRA_VALUE}}</div>
+        </div>
+        <div class="receipt-row" style="border-top: 1px solid var(--border);">
+          <div>
+            <div style="font-size:14px; font-weight:500;">Iluminação pública (CIP)</div>
+            <div class="receipt-sub">taxa fixa da Prefeitura, não depende de consumo</div>
+          </div>
+          <div class="num" style="font-size: 15px; font-weight: 500;">{{REC_CIP_VALUE}}</div>
+        </div>
+        {{REC_EXTRA_ROWS}}
+        <div class="receipt-row" style="border-top: 2px solid var(--ink-1); margin-top: 4px;">
+          <div style="font-size:15px; font-weight:600;">Total da conta</div>
+          <div class="num-tight" style="font-size: 20px; font-weight: 700;">{{LAST_BILL_PAID}}</div>
+        </div>
+
+        <div class="mt-6 p-4" style="background:#fff8e1; border-radius: 12px; border: 1px solid #fce8a8;">
+          <div class="flex gap-3">
+            <span style="font-size: 16px; line-height: 1.4;">💡</span>
+            <p style="font-size: 13px; line-height: 1.6; color: #5b4500;">{{EXPLAIN_PARAGRAPH}}</p>
+          </div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- 5. GERAÇÃO DO DIA -->
+  <section class="mb-10">
+    <div class="flex items-end justify-between mb-4">
+      <div class="eyebrow">Geração de hoje</div>
+      <div class="picker">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        {{DATE_SHORT}}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
+      <div class="card p-4 md:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="text-ink-2" style="font-size: 12px; font-weight:500;">Potência ao longo do dia</div>
+            <div class="num-tight mt-1" style="font-size: 24px; font-weight: 600;">
+              {{POWER_VALUE}} <span class="text-ink-3" style="font-size: 13px; font-weight: 500;">{{POWER_UNIT}} agora</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="dayChart" style="position: relative; width: 100%; height: 240px;">
+          <svg id="dayChartSvg" viewBox="0 0 720 240" width="100%" height="240" preserveAspectRatio="none" style="display:block;">
+            <defs>
+              <linearGradient id="solarFill" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%"  stop-color="#ff9f0a" stop-opacity="0.18"/>
+                <stop offset="100%" stop-color="#ff9f0a" stop-opacity="0.00"/>
+              </linearGradient>
+            </defs>
+            <g stroke="#f0f0f5" stroke-width="1">
+              <line x1="40" y1="20"  x2="710" y2="20"/>
+              <line x1="40" y1="70"  x2="710" y2="70"/>
+              <line x1="40" y1="120" x2="710" y2="120"/>
+              <line x1="40" y1="170" x2="710" y2="170"/>
+              <line x1="40" y1="220" x2="710" y2="220"/>
+            </g>
+            <g fill="#a1a1a6" font-size="10" font-family="Inter, sans-serif">
+              <text x="32" y="24" text-anchor="end">6,0</text>
+              <text x="32" y="74" text-anchor="end">4,5</text>
+              <text x="32" y="124" text-anchor="end">3,0</text>
+              <text x="32" y="174" text-anchor="end">1,5</text>
+              <text x="32" y="224" text-anchor="end">0,0</text>
+            </g>
+            <text x="40" y="12" fill="#a1a1a6" font-size="10" font-family="Inter, sans-serif">kW</text>
+            <g fill="#a1a1a6" font-size="10" font-family="Inter, sans-serif" text-anchor="middle">
+              <text x="40"  y="236">00:00</text>
+              <text x="124" y="236">03:00</text>
+              <text x="208" y="236">06:00</text>
+              <text x="292" y="236">09:00</text>
+              <text x="376" y="236">12:00</text>
+              <text x="460" y="236">15:00</text>
+              <text x="544" y="236">18:00</text>
+              <text x="628" y="236">21:00</text>
+              <text x="710" y="236">23:59</text>
+            </g>
+            <path id="areaPath" d="" fill="url(#solarFill)"/>
+            <path id="linePath" d="" fill="none" stroke="#ff9f0a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="projPath" d="" fill="none" stroke="#ff9f0a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 4" opacity="0.45"/>
+            <line id="nowLine" x1="0" y1="20" x2="0" y2="220" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+            <circle id="nowDot" cx="0" cy="0" r="3.5" fill="#ff9f0a" stroke="#fff" stroke-width="2"/>
+            <line id="hoverLine" x1="-10" y1="20" x2="-10" y2="220" stroke="#1d1d1f" stroke-width="1" opacity="0"/>
+            <circle id="hoverDot" cx="-10" cy="0" r="4" fill="#fff" stroke="#ff9f0a" stroke-width="2" opacity="0"/>
+          </svg>
+          <div id="tooltip" class="tooltip-pill" style="display:none; left: 0; top: 0;">
+            <span class="t-time">13:45</span><span class="t-val">4,8 kW</span>
+          </div>
+          <div id="nowLabel" style="position:absolute; transform: translate(-50%, -100%); font-size: 11px; color: var(--solar); font-weight: 600; pointer-events: none; padding: 2px 6px; background:#fff; border:1px solid rgba(255,159,10,0.3); border-radius: 6px;">agora · {{TIME_NOW}}</div>
+        </div>
+
+        <div class="mt-4 flex items-center flex-wrap gap-x-5 gap-y-2" style="font-size: 12px; color: var(--ink-2);">
+          <span class="inline-flex items-center gap-1.5"><span class="dot" style="background:#ff9f0a; width:8px; height:8px;"></span> Real</span>
+          <span class="inline-flex items-center gap-1.5"><span style="width: 12px; height: 0; border-top: 1.5px dashed #ff9f0a; display:inline-block;"></span> Projeção (até pôr-do-sol)</span>
+          <span class="text-ink-3 sm:ml-auto">Capacidade nominal: 6,0 kWp</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 lg:flex lg:flex-col">
+        <div class="card p-5">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="text-ink-2" style="font-size: 12px;">Pico do dia</div>
+              <div class="num-tight mt-2" style="font-size: 24px; font-weight: 600; color: var(--solar);">{{DAY_PEAK}}</div>
+              <div class="text-ink-3 mt-1" style="font-size: 12px;">às {{DAY_PEAK_TIME}}</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="2" stroke-linecap="round"><path d="M3 17 10 9l4 4 7-9"/><path d="M14 4h7v7"/></svg>
+          </div>
+        </div>
+        <div class="card p-5">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="text-ink-2" style="font-size: 12px;">Energia de hoje</div>
+              <div class="num-tight mt-2" style="font-size: 24px; font-weight: 600;">{{DAY_ENERGY}}</div>
+              <div class="text-ink-3 mt-1" style="font-size: 12px;">{{DAY_ENERGY_BRL}} em energia</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" fill="#ffd60a"/></svg>
+          </div>
+        </div>
+        <div class="card p-5">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="text-ink-2" style="font-size: 12px;">Sol equivalente</div>
+              <div class="num-tight mt-2" style="font-size: 24px; font-weight: 600;">{{DAY_SUN_HOURS}}</div>
+              <div class="text-ink-3 mt-1" style="font-size: 12px;">em 6 kWp instalados</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. HISTÓRICO -->
+  <section class="mb-10">
+    <div class="eyebrow mb-4">Histórico</div>
+    <div class="card p-6">
+      <div class="flex items-center justify-between mb-5" style="border-bottom: 1px solid var(--border); margin: -8px -8px 16px;">
+        <div class="px-8 flex">
+          <button class="tab" id="tab-months" aria-selected="true">Consumo vs. geração</button>
+          <button class="tab" id="tab-days" aria-selected="false">Dias do ciclo atual</button>
+        </div>
+        <div class="px-8 text-ink-3" style="font-size: 12px;">unidade: kWh</div>
+      </div>
+
+      <!-- TAB 1: meses (consumo da rede vs injetado) -->
+      <div id="panel-months">
+        <svg id="histSvg" viewBox="0 0 720 240" width="100%" height="240" preserveAspectRatio="none">
+          <g id="histGrid" stroke="#f0f0f5"></g>
+          <g id="histYLabels" fill="#a1a1a6" font-size="10" font-family="Inter, sans-serif"></g>
+          <g id="histBars"></g>
+          <g id="histLabels" fill="#a1a1a6" font-size="10" font-family="Inter, sans-serif" text-anchor="middle"></g>
+        </svg>
+        <div class="flex items-center flex-wrap gap-x-5 gap-y-2 mt-3" style="font-size: 12px; color: var(--ink-2);">
+          <span class="inline-flex items-center gap-1.5"><span class="dot" style="background:#0a84ff; width:9px; height:9px; border-radius:3px;"></span> Consumo da rede</span>
+          <span class="inline-flex items-center gap-1.5"><span class="dot" style="background:#ff9f0a; width:9px; height:9px; border-radius:3px;"></span> Injetado (gerado p/ rede)</span>
+          <span class="text-ink-3 sm:ml-auto">{{HISTORY_NOTE}}</span>
+        </div>
+      </div>
+
+      <!-- TAB 2: dias do ciclo -->
+      <div id="panel-days" style="display:none;">
+        <svg viewBox="0 0 720 220" width="100%" height="220" preserveAspectRatio="none">
+          <g stroke="#f0f0f5"><line x1="40" y1="20" x2="710" y2="20"/><line x1="40" y1="70" x2="710" y2="70"/><line x1="40" y1="120" x2="710" y2="120"/><line x1="40" y1="170" x2="710" y2="170"/></g>
+          <g id="dayBars" fill="#ff9f0a"></g>
+          <g id="dayLabels" fill="#a1a1a6" font-size="10" text-anchor="middle"></g>
+          <g id="dayValues" fill="#6e6e73" font-size="11" font-weight="500" text-anchor="middle"></g>
+        </svg>
+        <div class="text-ink-3 mt-3" style="font-size: 12px;">
+          {{CYCLE_KWH}} kWh acumulados em {{CYCLE_DAY}} dias · média de {{CYCLE_AVG_DAILY}} kWh/dia
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. DETALHES TÉCNICOS -->
+  <section class="mb-10">
+    <details class="card" style="border-radius: 14px;">
+      <summary class="flex items-center justify-between px-5 py-4 hover-row" style="border-radius: 14px;">
+        <div class="flex items-center gap-3">
+          <span class="ic-bg" style="background: rgba(110,110,115,0.1); width: 28px; height: 28px; border-radius: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6e6e73" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1.1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1.1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>
+          </span>
+          <div>
+            <div style="font-size: 14px; font-weight: 500;">Detalhes técnicos</div>
+            <div class="text-ink-3" style="font-size: 12px;">Strings PV, saída CA, tarifas vigentes</div>
+          </div>
+        </div>
+        <span class="chev text-ink-3">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+        </span>
+      </summary>
+
+      <div style="border-top: 1px solid var(--border); padding: 20px 24px;">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div class="eyebrow mb-3">Entrada CC · painéis</div>
+            <table class="tech">
+              <thead><tr><th>String</th><th class="num-c">Tensão</th><th class="num-c">Corrente</th><th class="num-c">Potência</th></tr></thead>
+              <tbody>
+                <tr><td>PV1</td><td class="num-c">{{PV1_V}} V</td><td class="num-c">{{PV1_A}} A</td><td class="num-c">{{PV1_W}} W</td></tr>
+                <tr><td>PV2</td><td class="num-c">{{PV2_V}} V</td><td class="num-c">{{PV2_A}} A</td><td class="num-c">{{PV2_W}} W</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div class="eyebrow mb-3">Saída CA · rede</div>
+            <table class="tech">
+              <thead><tr><th>Parâmetro</th><th class="num-c">Valor</th><th class="num-c">Esperado</th><th class="num-c">Status</th></tr></thead>
+              <tbody>
+                <tr><td>Tensão</td><td class="num-c">{{AC_V}} V</td><td class="num-c">220 V</td><td class="num-c"><span style="color:#0e7c2c;">●</span></td></tr>
+                <tr><td>Corrente</td><td class="num-c">{{AC_A}} A</td><td class="num-c">—</td><td class="num-c"><span style="color:#0e7c2c;">●</span></td></tr>
+                <tr><td>Frequência</td><td class="num-c">{{AC_HZ}} Hz</td><td class="num-c">60 Hz</td><td class="num-c"><span style="color:#0e7c2c;">●</span></td></tr>
+                <tr><td>Temperatura</td><td class="num-c">{{TEMP_VALUE}} °C</td><td class="num-c">&lt; 60 °C</td><td class="num-c"><span style="color:#0e7c2c;">●</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="mt-5 p-3" style="background: #fafafb; border: 1px solid var(--border); border-radius: 10px; font-size: 12px; color: var(--ink-2);">
+          <b style="color: var(--ink-1)">Tarifa atual</b> TE+TUSD = {{TARIFA_CHEIA}}/kWh · Bandeira {{BANDEIRA_NOME}} · Fio B {{FIO_B}}/kWh · CIP {{CIP}}/mês
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- 8. FOOTER -->
+  <footer class="text-center text-ink-3 py-6" style="font-size: 12px;">
+    <p>Última sincronização: {{LAST_SYNC}} · Auto-refresh a cada 60s · Dados via Growatt ShinePhone API</p>
+    <p class="mt-1">SolarGuru · feito para {{NAME}} · v0.6.0</p>
+  </footer>
+
+</div>
+
+<script>
+/* ============== DAY CHART ============== */
+(function buildDayChart(){
+  const x0 = 40, x1 = 710;
+  const y0 = 220, y1 = 20;
+  const xAt = h => x0 + (x1 - x0) * (h / 24);
+  const yAt = kw => y0 + (y1 - y0) * (kw / 6);
+
+  const real = {{DAY_CURVE_REAL_JSON}};
+  const proj = {{DAY_CURVE_PROJ_JSON}};
+  const nowH = {{NOW_HOUR_DECIMAL}};
+  const nowKw = {{NOW_KW}};
+
+  const toPath = (pts) =>
+    pts.map((p, i) => (i === 0 ? 'M' : 'L') + xAt(p[0]).toFixed(2) + ',' + yAt(p[1]).toFixed(2)).join(' ');
+
+  if (real.length) {
+    const full = real.concat(proj.slice(1));
+    const areaD = toPath(full) + ` L ${xAt(24)},${yAt(0)} L ${xAt(0)},${yAt(0)} Z`;
+    document.getElementById('areaPath').setAttribute('d', areaD);
+    document.getElementById('linePath').setAttribute('d', toPath(real));
+    document.getElementById('projPath').setAttribute('d', toPath(proj));
+  }
+
+  const nowX = xAt(nowH), nowY = yAt(nowKw);
+  const nowLine = document.getElementById('nowLine');
+  nowLine.setAttribute('x1', nowX); nowLine.setAttribute('x2', nowX);
+  const nowDot = document.getElementById('nowDot');
+  nowDot.setAttribute('cx', nowX); nowDot.setAttribute('cy', nowY);
+  const svg = document.getElementById('dayChartSvg');
+  const container = document.getElementById('dayChart');
+  function placeNowLabel() {
+    const rect = svg.getBoundingClientRect();
+    const sx = rect.width / 720, sy = rect.height / 240;
+    const lbl = document.getElementById('nowLabel');
+    lbl.style.left = (nowX * sx) + 'px';
+    lbl.style.top  = ((nowY - 8) * sy) + 'px';
+  }
+  placeNowLabel();
+  window.addEventListener('resize', placeNowLabel);
+
+  const lookup = real.concat(proj.slice(1)).slice().sort((a,b) => a[0]-b[0]);
+  function kwAt(h) {
+    if (!lookup.length) return 0;
+    if (h <= lookup[0][0]) return lookup[0][1];
+    if (h >= lookup[lookup.length-1][0]) return lookup[lookup.length-1][1];
+    for (let i = 1; i < lookup.length; i++) {
+      if (lookup[i][0] >= h) {
+        const a = lookup[i-1], b = lookup[i];
+        const t = (h - a[0]) / (b[0] - a[0]);
+        return a[1] + (b[1] - a[1]) * t;
+      }
+    }
+    return 0;
+  }
+  const fmtTime = h => String(Math.floor(h)).padStart(2,'0') + ':' + String(Math.round((h-Math.floor(h))*60)).padStart(2,'0');
+  const fmtKw = v => v.toFixed(2).replace('.', ',') + ' kW';
+  const tooltip = document.getElementById('tooltip');
+  const hoverLine = document.getElementById('hoverLine');
+  const hoverDot = document.getElementById('hoverDot');
+  container.addEventListener('mousemove', e => {
+    const rect = svg.getBoundingClientRect();
+    const sx = 720 / rect.width, sy = 240 / rect.height;
+    const svgX = (e.clientX - rect.left) * sx;
+    if (svgX < x0 || svgX > x1) { tooltip.style.display='none'; hoverLine.setAttribute('opacity',0); hoverDot.setAttribute('opacity',0); return; }
+    const h = (svgX - x0) / (x1 - x0) * 24;
+    const kw = kwAt(h), svgY = yAt(kw);
+    hoverLine.setAttribute('x1', svgX); hoverLine.setAttribute('x2', svgX); hoverLine.setAttribute('opacity', 0.25);
+    hoverDot.setAttribute('cx', svgX); hoverDot.setAttribute('cy', svgY); hoverDot.setAttribute('opacity', 1);
+    tooltip.style.display='block';
+    tooltip.style.left = (svgX / sx) + 'px';
+    tooltip.style.top  = (svgY / sy) + 'px';
+    tooltip.querySelector('.t-time').textContent = fmtTime(h) + ' ·';
+    tooltip.querySelector('.t-val').textContent = fmtKw(kw);
+  });
+  container.addEventListener('mouseleave', () => { tooltip.style.display='none'; hoverLine.setAttribute('opacity',0); hoverDot.setAttribute('opacity',0); });
+})();
+
+/* ============== HISTORY · consumo vs geracao (grouped bars) ============== */
+(function buildHistoryBars(){
+  const data = {{HISTORY_BARS_JSON}};  // [{mes, consumo, injetado}]
+  if (!data || !data.length) return;
+  const x0 = 44, x1 = 710, y0 = 200, y1 = 20;
+  const maxV = Math.max(...data.flatMap(d => [d.consumo, d.injetado]), 1) * 1.15;
+  const grid = document.getElementById('histGrid');
+  const ylab = document.getElementById('histYLabels');
+  for (let i = 0; i <= 4; i++) {
+    const y = y0 - (i/4)*(y0-y1);
+    const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1', x0); ln.setAttribute('y1', y); ln.setAttribute('x2', 710); ln.setAttribute('y2', y);
+    grid.appendChild(ln);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', 36); t.setAttribute('y', y+3); t.setAttribute('text-anchor','end');
+    t.textContent = Math.round((i/4)*maxV);
+    ylab.appendChild(t);
+  }
+  const barsG = document.getElementById('histBars');
+  const labelsG = document.getElementById('histLabels');
+  const n = data.length;
+  const slot = (x1 - x0) / n;
+  const bw = Math.min(slot * 0.30, 26);
+  data.forEach((d, i) => {
+    const cx = x0 + slot*i + slot/2;
+    // consumo (azul) a esquerda, injetado (laranja) a direita
+    [['consumo', '#0a84ff', -bw-2], ['injetado', '#ff9f0a', 2]].forEach(([key, color, off]) => {
+      const v = d[key] || 0;
+      const bh = (v/maxV)*(y0-y1);
+      const by = y0 - bh;
+      const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      r.setAttribute('x', cx+off); r.setAttribute('y', by);
+      r.setAttribute('width', bw); r.setAttribute('height', Math.max(0,bh));
+      r.setAttribute('rx', 4); r.setAttribute('fill', color);
+      barsG.appendChild(r);
+    });
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', cx); t.setAttribute('y', 216); t.textContent = d.mes;
+    labelsG.appendChild(t);
+  });
+})();
+
+/* ============== HISTORY · daily bars ============== */
+(function buildDayBars(){
+  const data = {{DAY_BARS_JSON}};
+  if (!data || !data.length) return;
+  const x0 = 60, x1 = 700, y0 = 200, y1 = 20;
+  const max = Math.max(...data.map(d => d[1]), 1) * 1.15;
+  const barsG = document.getElementById('dayBars');
+  const labelsG = document.getElementById('dayLabels');
+  const valuesG = document.getElementById('dayValues');
+  const n = data.length, slot = (x1 - x0) / n, barW = slot * 0.55;
+  data.forEach(([label, v], i) => {
+    const cx = x0 + slot * i + slot/2, bx = cx - barW/2;
+    const by = y0 - (v / max) * (y0 - y1), bh = (v / max) * (y0 - y1);
+    const today = i === n - 1;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', bx); rect.setAttribute('y', by); rect.setAttribute('width', barW); rect.setAttribute('height', Math.max(0,bh)); rect.setAttribute('rx', 5);
+    rect.setAttribute('fill', today ? '#ffc56a' : '#ff9f0a');
+    barsG.appendChild(rect);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', cx); t.setAttribute('y', 216); t.textContent = label + (today ? ' · hoje' : '');
+    if (today) t.setAttribute('fill', '#1d1d1f');
+    labelsG.appendChild(t);
+    const vt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    vt.setAttribute('x', cx); vt.setAttribute('y', by - 6); vt.textContent = String(v).replace('.', ',');
+    valuesG.appendChild(vt);
+  });
+})();
+
+/* ============== TABS ============== */
+(function tabs(){
+  const tm = document.getElementById('tab-months');
+  const td = document.getElementById('tab-days');
+  const pm = document.getElementById('panel-months');
+  const pd = document.getElementById('panel-days');
+  function set(which) {
+    const isM = which === 'months';
+    tm.setAttribute('aria-selected', isM);
+    td.setAttribute('aria-selected', !isM);
+    pm.style.display = isM ? '' : 'none';
+    pd.style.display = isM ? 'none' : '';
+  }
+  tm.addEventListener('click', () => set('months'));
+  td.addEventListener('click', () => set('days'));
+})();
+
+/* ============== AUTO-ALTURA (responsivo) ==============
+ * Reporta a altura real do conteudo pro Streamlit, pra o iframe nao cortar
+ * nem sobrar espaco — funciona em qualquer largura (desktop e celular).
+ */
+(function autoHeight(){
+  function apply(){
+    var h = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.body.offsetHeight
+    );
+    // 1) avisa o Streamlit (caso a versao honre o evento)
+    try { window.parent.postMessage({type: 'streamlit:setFrameHeight', height: h}, '*'); } catch(e){}
+    // 2) fallback: redimensiona o proprio iframe e os conteineres do Streamlit
+    //    (funciona porque o iframe e same-origin)
+    try {
+      var fe = window.frameElement;
+      if (fe) {
+        fe.style.height = h + 'px';
+        fe.style.minHeight = h + 'px';
+        var p = fe.parentElement;
+        var hops = 0;
+        while (p && hops < 6) {
+          if (p.style) { p.style.height = 'auto'; p.style.maxHeight = 'none'; }
+          p = p.parentElement; hops++;
+        }
+      }
+    } catch(e){}
+  }
+  window.addEventListener('load', apply);
+  window.addEventListener('resize', apply);
+  if (window.ResizeObserver) { new ResizeObserver(apply).observe(document.body); }
+  document.addEventListener('click', function(){ setTimeout(apply, 80); });
+  [100, 400, 900, 1600, 2500].forEach(function(t){ setTimeout(apply, t); });
+})();
+</script>
+
+</body>
+</html>
